@@ -1,0 +1,60 @@
+abstract class User(
+    private val id: Int,
+    internal val login: String,
+    private val email: String,
+    private val registerDate: String
+) {
+    fun getUserInfo(): String {
+        return "ID: $id, Login: $login, Email: $email, Rejestracja: $registerDate"
+    }
+
+    abstract fun userType(): String
+}
+
+class Buyer(
+    id: Int,
+    login: String,
+    email: String,
+    registerDate: String,
+    private val purchaseCount: Int
+) : User(id, login, email, registerDate) {
+
+    override fun userType(): String {
+        return "Kupujący"
+    }
+
+    fun makePurchase(): String {
+        return "Klient $login zamowil kawe! Liczba zakupów: $purchaseCount"
+    }
+}
+
+class Seller(
+    id: Int,
+    login: String,
+    email: String,
+    registerDate: String,
+    private val soldItems: Int
+) : User(id, login, email, registerDate) {
+
+    override fun userType(): String {
+        return "Sprzedawca"
+    }
+
+    fun addProduct(): String {
+        return "Sprzedawca $login dodał nowy produkt do sprzedaży!"
+    }
+}
+
+
+fun main() {
+    val buyer = Buyer(1, "janKowalski", "jan@mail.com", "2023-02-15", 5)
+    val seller = Seller(2, "sprzedawca", "sklep@mail.com", "2021-06-10", 120)
+
+    println(buyer.getUserInfo())
+    println(buyer.userType())
+    println(buyer.makePurchase())
+
+    println(seller.getUserInfo())
+    println(seller.userType())
+    println(seller.addProduct())
+}
