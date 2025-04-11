@@ -5,19 +5,53 @@ import java.security.MessageDigest
 import java.util.*
 import java.time.LocalDate
 
+
+/**
+ * Interfejs definiujący możliwość logowania użytkownika.
+ */
 interface Loginable {
+    /**
+     * Loguje użytkownika na podstawie podanego hasła.
+     *
+     * @param password Hasło użytkownika.
+     * @return Komunikat o statusie logowania.
+     */
     fun loginUser(password: String): String
 }
 
+/**
+ * Interfejs definiujący możliwość rejestracji użytkownika.
+ */
 interface Registerable {
+    /**
+     * Rejestruje nowego użytkownika.
+     *
+     * @return Komunikat o zakończeniu procesu rejestracji.
+     */
     fun registerUser(): String
 }
 
+/**
+ * Interfejs opinii – pozwala użytkownikowi dodawać i przeglądać recenzje.
+ */
 interface Reviews {
-    fun addRev(review: String, star: Int)
+    /**
+     * Zwraca listę wszystkich opinii użytkownika.
+     *
+     * @return Lista opinii.
+     */
     fun viewReviews(): List<String>
 }
 
+/**
+ * Klasa bazowa reprezentująca użytkownika. Zawiera dane logowania, hasło oraz datę rejestracji.
+ *
+ * @param id Identyfikator użytkownika.
+ * @param login Nazwa użytkownika (login).
+ * @param email Adres e-mail użytkownika.
+ * @param registerDate Data rejestracji użytkownika.
+ * @param hashedPassword Zaszyfrowane hasło użytkownika.
+ */
 abstract class User(
     val id: Int,
     internal val login: String,
@@ -25,10 +59,21 @@ abstract class User(
     protected val registerDate: String,
     protected val hashedPassword: String
 ) {
+    /**
+     * Zwraca informacje o użytkowniku w postaci tekstowej.
+     *
+     * @return Informacje o użytkowniku.
+     */
     fun getUserInfo(): String {
         return "ID: $id, Login: $login, Email: $email, Rejestracja: $registerDate"
     }
 
+    /**
+     * Sprawdza, czy podane hasło jest zgodne z zapisanym w systemie hasłem.
+     *
+     * @param inputPassword Hasło podane przez użytkownika.
+     * @return `true` jeśli hasło jest zgodne, `false` w przeciwnym razie.
+     */
     fun checkPassword(inputPassword: String): Boolean {
         return hashedPassword == hashPassword(inputPassword)
     }
@@ -37,6 +82,9 @@ abstract class User(
     abstract fun getRawData(): String
 }
 
+/**
+ * Klasa reprezentująca kupującego.
+ */
 class Buyer(
     id: Int,
     login: String,
@@ -50,6 +98,11 @@ class Buyer(
 
     val buyerReview = BuyerReview()
 
+    /**
+     * Zwraca typ użytkownika, np. "Kupujacy" lub "Sprzedawca".
+     *
+     * @return Typ użytkownika.
+     */
     override fun userType(): String = "Kupujacy"
 
     override fun loginUser(password: String): String {
@@ -62,11 +115,28 @@ class Buyer(
 
     override fun registerUser(): String = "Kupujacy $login zostal zarejestrowany!"
 
+    /**
+     * Zwraca dane użytkownika w surowym formacie (do zapisu do pliku).
+     *
+     * @return Surowe dane użytkownika.
+     */
     override fun getRawData(): String {
         return "$id,$login,$email,$registerDate,$hashedPassword"
     }
 }
 
+/**
+ * Klasa reprezentująca kupującego w systemie.
+ *
+ * @param id Identyfikator użytkownika.
+ * @param login Nazwa użytkownika.
+ * @param email Adres e-mail użytkownika.
+ * @param registerDate Data rejestracji użytkownika.
+ * @param password Hasło użytkownika.
+ * @param soldItems Liczba dokonanych zakupów (domyślnie 0).
+ * @param hashed Flaga określająca, czy hasło jest zaszyfrowane.
+ * @param balance Saldo konta kupującego (domyślnie 0.0).
+ */
 class Seller(
     id: Int,
     login: String,
@@ -78,8 +148,19 @@ class Seller(
     var balance: Double = 0.0
 ) : User(id, login, email, registerDate, if (hashed) password else hashPassword(password)), Loginable, Registerable {
 
+    /**
+     * Zwraca typ użytkownika ("Kupujacy").
+     *
+     * @return Typ użytkownika.
+     */
     override fun userType(): String = "Sprzedawca"
 
+    /**
+     * Loguje użytkownika na podstawie podanego hasła.
+     *
+     * @param password Hasło użytkownika.
+     * @return Komunikat o statusie logowania.
+     */
     override fun loginUser(password: String): String {
         return if (checkPassword(password)) {
             "Sprzedawca $login zalogowal sie!"
@@ -88,8 +169,18 @@ class Seller(
         }
     }
 
+    /**
+     * Rejestruje użytkownika jako kupującego.
+     *
+     * @return Komunikat o zakończeniu rejestracji.
+     */
     override fun registerUser(): String = "Sprzedawca $login zostal zarejestrowany!"
 
+    /**
+     * Zwraca dane użytkownika w surowym formacie (do zapisu do pliku).
+     *
+     * @return Surowe dane użytkownika.
+     */
     override fun getRawData(): String {
         return "$id,$login,$email,$registerDate,$hashedPassword"
     }
@@ -98,6 +189,10 @@ class Seller(
 val USERS_FILE = "users.txt"
 val PRODUCTS_FILE = "products.txt"
 
+/**
+ * Zapisuje użytkowników do pliku tekstowego.
+ * @param users Lista użytkowników do zapisania.
+ */
 fun saveUsersToFile(users: List<User>) {
     File(USERS_FILE).printWriter().use { out ->
         for (user in users) {
@@ -111,6 +206,10 @@ fun saveUsersToFile(users: List<User>) {
     }
 }
 
+/**
+ * Wczytuje użytkowników z pliku tekstowego.
+ * @return Lista wczytanych użytkowników.
+ */
 fun loadUsersFromFile(): MutableList<User> {
     val users = mutableListOf<User>()
     if (!File(USERS_FILE).exists()) return users
@@ -135,6 +234,12 @@ fun loadUsersFromFile(): MutableList<User> {
     return users
 }
 
+/**
+ * Funkcja do haszowania hasła użytkownika.
+ *
+ * @param password Hasło do zaszyfrowania.
+ * @return Zaszyfrowane hasło.
+ */
 fun hashPassword(password: String): String {
     val md = MessageDigest.getInstance("SHA-256")
     val digest = md.digest(password.toByteArray())
@@ -143,7 +248,13 @@ fun hashPassword(password: String): String {
 
 ////////////
 
-
+/**
+ * Klasa reprezentująca produkt w sklepie.
+ * @property nazwa Nazwa produktu.
+ * @property cena Cena produktu.
+ * @property opis Opis produktu.
+ * @property seller Sprzedawca oferujący ten produkt.
+ */
 class Product(
     var nazwa: String,
     var cena: Double,
@@ -155,37 +266,44 @@ class Product(
     }
 }
 
-fun processPayment(seller: Seller, amount: Double) {
-    println("Sprzedawca ${seller.login} zarobił $amount PLN")
-    seller.balance += amount
-}
-
+/**
+ * Klasa do wystawiania i przeglądania opinii użytkownika.
+ */
 class BuyerReview : Reviews {
-    private val reviews = mutableListOf<String>()
+    private val sellerReviews = mutableMapOf<String, MutableList<String>>() // login sprzedawcy -> opinie
 
-    override fun addRev(review: String, star: Int) {
+    fun addRevForSeller(sellerLogin: String, review: String, star: Int) {
         val rating = "★".repeat(star) + "☆".repeat(5 - star)
         val fullReview = "Opinia: $review, Ocena: $rating"
+
+        val reviews = sellerReviews.getOrPut(sellerLogin) { mutableListOf() }
         reviews.add(fullReview)
-        println(fullReview)
+
+        println("Dodano opinię dla sprzedawcy '$sellerLogin': $fullReview")
+    }
+
+    fun viewReviewsForSeller(sellerLogin: String): List<String> {
+        return sellerReviews[sellerLogin] ?: listOf("Brak opinii dla tego sprzedawcy.")
     }
 
     override fun viewReviews(): List<String> {
-        return reviews
+        // Można zwrócić wszystkie opinie dla wszystkich sprzedawców (opcjonalnie)
+        return sellerReviews.flatMap { (seller, reviews) ->
+            reviews.map { "Sprzedawca: $seller, $it" }
+        }
     }
 }
 
-fun viewReviews(buyerReview: BuyerReview) {
-    println("Opinie użytkownika:")
-    for (review in buyerReview.viewReviews()) {
-        println(review)
-    }
-}
-
+/**
+ * Główna klasa systemu sklepu – zarządza użytkownikami i produktami.
+ */
 class Marketplace {
     private val users = mutableListOf<User>()
     val products = mutableListOf<Product>()
 
+    /**
+     * Rejestruje nowego użytkownika.
+     */
     fun registerUser(user: User) {
         users.add(user)
         println("${user.login} został zarejestrowany.")
@@ -198,25 +316,33 @@ class Marketplace {
         }
     }
 
+    /**
+     * Dodaje produkt do listy dostępnych.
+     */
     fun addProduct(product: Product) {
         products.add(product)
     }
 
+    /**
+     * Realizuje zakup produktu przez kupującego.
+     */
     fun makePurchase(buyer: Buyer, product: Product) {
         if (buyer.balance >= product.cena) {
             buyer.balance -= product.cena
             product.seller.balance += product.cena
             println("Zakupiono '${product.nazwa}' za ${product.cena} PLN.")
             println("Nowe saldo kupującego: ${buyer.balance} PLN")
-            println("Nowe saldo sprzedawcy: ${product.seller.balance} PLN")
         } else {
-            println("Kupujący nie ma wystarczających środków na koncie.")
+            println("Brak wystarczających środków na koncie.")
         }
     }
 }
 
+/**
+ * Zapisuje produkty do pliku tekstowego.
+ */
 fun saveProductsToFile(products: List<Product>) {
-    File(PRODUCTS_FILE).printWriter().use { out ->
+    File(PRODUCTS_FILE).printWriter().use { out ->1
         for (product in products) {
             // Format: nazwa,cena,opis,sellerLogin
             out.println("${product.nazwa},${product.cena},${product.opis},${product.seller.login}")
@@ -224,6 +350,9 @@ fun saveProductsToFile(products: List<Product>) {
     }
 }
 
+/**
+ * Wczytuje produkty z pliku tekstowego i przypisuje je sprzedawcom.
+ */
 fun loadProductsFromFile(users: List<User>): MutableList<Product> {
     val products = mutableListOf<Product>()
     if (!File(PRODUCTS_FILE).exists()) return products
@@ -245,6 +374,9 @@ fun loadProductsFromFile(users: List<User>): MutableList<Product> {
     return products
 }
 
+/**
+ * Funkcja główna – uruchamia menu programu.
+ */
 @RequiresApi(Build.VERSION_CODES.O)
 fun main() {
     val scanner = Scanner(System.`in`)
@@ -262,8 +394,8 @@ fun main() {
         println("\n==== MENU ====")
         println("1. Rejestracja")
         println("2. Logowanie")
-        println("0. Wyjście")
-        print("Wybierz opcję: ")
+        println("0. Wyjscie")
+        print("Wybierz opcje: ")
 
         when (scanner.nextLine()) {
             "1" -> {
@@ -274,13 +406,17 @@ fun main() {
                 val email = scanner.nextLine()
                 print("Hasło: ")
                 val password = scanner.nextLine()
-                print("Typ użytkownika (kupujący/sprzedawca): ")
-                val type = scanner.nextLine()
+
+                println("Typ uzytkownika:")
+                println("1. Kupujacy")
+                println("2. Sprzedawca")
+                print("Wybierz 1 lub 2: ")
+                val typeOption = scanner.nextLine()
                 val registerDate = LocalDate.now().toString()
 
-                val user = when (type.lowercase()) {
-                    "kupujący" -> Buyer(userId++, login, email, registerDate, password)
-                    "sprzedawca" -> {
+                val user = when (typeOption) {
+                    "1" -> Buyer(userId++, login, email, registerDate, password)
+                    "2" -> {
                         print("Podaj kod autoryzacyjny sprzedawcy: ")
                         val code = scanner.nextLine()
                         if (code != sellerCode) {
@@ -290,7 +426,7 @@ fun main() {
                         Seller(userId++, login, email, registerDate, password)
                     }
                     else -> {
-                        println("Nieznany typ użytkownika.")
+                        println("Nieznana opcja.")
                         continue
                     }
                 }
@@ -300,17 +436,24 @@ fun main() {
                 saveUsersToFile(users)
                 println(user.registerUser())
             }
+
             "2" -> {
                 println("\n--- Logowanie ---")
                 print("Login: ")
                 val login = scanner.nextLine()
-                print("Hasło: ")
+                print("Haslo: ")
                 val password = scanner.nextLine()
                 val foundUser = users.find { it.login == login }
 
                 if (foundUser != null && foundUser is Loginable) {
                     val result = foundUser.loginUser(password)
                     println(result)
+
+                    if (!foundUser.checkPassword(password)) {
+                        println("Logowanie nie powiodło sie – nieprawidlowe haslo.")
+                        continue
+                    }
+
                     println("Informacje: ${foundUser.getUserInfo()}")
 
                     // Jeśli sprzedawca, pokaż menu dodawania produktów
@@ -318,10 +461,10 @@ fun main() {
                         while (true) {
                             println("\n--- MENU SPRZEDAWCY ---")
                             println("1. Dodaj produkt")
-                            println("2. Pokaż produkty")
-                            println("3. Wypłać środki")
+                            println("2. Pokaz produkty")
+                            println("3. Wyplac srodki")
                             println("0. Wyloguj")
-                            print("Wybierz opcję: ")
+                            print("Wybierz opcje: ")
                             when (scanner.nextLine()) {
                                 "1" -> {
                                     print("Nazwa produktu: ")
@@ -341,14 +484,14 @@ fun main() {
                                 }
                                 "2" -> marketplace.showProducts()
                                 "3" -> {
-                                    print("Kwota do wypłaty: ")
+                                    print("Kwota do wyplaty: ")
                                     val kwota = scanner.nextLine().toDoubleOrNull()
                                     if (kwota != null && kwota <= foundUser.balance) {
                                         foundUser.balance -= kwota
-                                        println("Wypłacono $kwota PLN. Pozostałe saldo: ${foundUser.balance} PLN")
+                                        println("Wyplacono $kwota PLN. Pozostale saldo: ${foundUser.balance} PLN")
                                         // Zapisz zaktualizowanych użytkowników (nowe salda)
                                         saveUsersToFile(users)
-                                    } else println("Niepoprawna kwota lub brak środków.")
+                                    } else println("Niepoprawna kwota lub brak srodkow.")
                                 }
                                 "0" -> break
                                 else -> println("Nieznana opcja.")
@@ -356,20 +499,20 @@ fun main() {
                         }
                     } else if (foundUser is Buyer) {
                         while (true) {
-                            println("\n--- MENU KUPUJĄCEGO ---")
-                            println("1. Pokaż produkty")
+                            println("\n--- MENU KUPUJACEGO ---")
+                            println("1. Pokaz produkty")
                             println("2. Kup produkt")
-                            println("3. Pokaż saldo")
-                            println("4. Doładuj saldo")
-                            println("5. Wystaw opinię")
-                            println("6. Pokaż opinie")
+                            println("3. Pokaz saldo")
+                            println("4. Doladuj saldo")
+                            println("5. Wystaw opinie")
+                            println("6. Pokaz opinie")
                             println("0. Wyloguj")
                             print("Wybierz opcję: ")
                             when (scanner.nextLine()) {
                                 "1" -> marketplace.showProducts()
                                 "2" -> {
                                     if (marketplace.products.isEmpty()) {
-                                        println("Brak dostępnych produktów.")
+                                        println("Brak dostepnych produktow.")
                                         continue
                                     }
                                     for ((i, p) in marketplace.products.withIndex()) {
@@ -381,41 +524,83 @@ fun main() {
                                         val prod = marketplace.products[idx!! - 1]
                                         marketplace.makePurchase(foundUser, prod)
                                         saveUsersToFile(users)
-                                    } else println("Nieprawidłowy wybór.")
+                                    } else println("Nieprawidlowy wybor.")
                                 }
                                 "3" -> println("Saldo: ${foundUser.balance} PLN")
                                 "4" -> {
-                                    print("Kwota do doładowania: ")
+                                    print("Kwota do doladowania: ")
                                     val kwota = scanner.nextLine().toDoubleOrNull()
                                     if (kwota != null && kwota > 0) {
                                         foundUser.balance += kwota
-                                        println("Doładowano $kwota PLN. Nowe saldo: ${foundUser.balance} PLN")
+                                        println("Doladowano $kwota PLN. Nowe saldo: ${foundUser.balance} PLN")
                                         saveUsersToFile(users)
                                     } else println("Niepoprawna kwota.")
                                 }
                                 "5" -> {
+                                    if (marketplace.products.isEmpty()) {
+                                        println("Brak produktow do oceny.")
+                                        continue
+                                    }
+
+                                    println("Dostepni sprzedawcy produktow:")
+                                    val sellers = marketplace.products.map { it.seller }.distinctBy { it.login }
+                                    for ((i, s) in sellers.withIndex()) {
+                                        println("${i + 1}. ${s.login}")
+                                    }
+
+                                    print("Wybierz numer sprzedawcy, którego chcesz ocenic: ")
+                                    val sellerIdx = scanner.nextLine().toIntOrNull()
+                                    if (sellerIdx !in 1..sellers.size) {
+                                        println("Nieprawidlowy wybor sprzedawcy.")
+                                        continue
+                                    }
+                                    val selectedSeller = sellers[sellerIdx!! - 1]
+
                                     print("Opinia: ")
                                     val text = scanner.nextLine()
                                     print("Ocena (1-5): ")
                                     val rating = scanner.nextLine().toIntOrNull()
-                                    if (rating in 1..5) foundUser.buyerReview.addRev(text, rating!!)
-                                    else println("Nieprawidłowa ocena.")
+                                    if (rating in 1..5) {
+                                        foundUser.buyerReview.addRevForSeller(selectedSeller.login, text, rating!!)
+                                    } else {
+                                        println("Nieprawidlowa ocena.")
+                                    }
                                 }
-                                "6" -> viewReviews(foundUser.buyerReview)
+                                "6" -> {
+                                    val sellers = marketplace.products.map { it.seller }.distinctBy { it.login }
+                                    if (sellers.isEmpty()) {
+                                        println("Brak sprzedawcow do wyswietlenia opinii.")
+                                        continue
+                                    }
+
+                                    println("Sprzedawcy z listy produktow:")
+                                    for ((i, s) in sellers.withIndex()) {
+                                        println("${i + 1}. ${s.login}")
+                                    }
+
+                                    print("Wybierz numer sprzedawcy, by zobaczyc opinie: ")
+                                    val sellerIdx = scanner.nextLine().toIntOrNull()
+                                    if (sellerIdx in 1..sellers.size) {
+                                        val sellerLogin = sellers[sellerIdx!! - 1].login
+                                        val reviews = foundUser.buyerReview.viewReviewsForSeller(sellerLogin)
+                                        println("Opinie dla sprzedawcy '$sellerLogin':")
+                                        reviews.forEach { println(it) }
+                                    } else println("Nieprawidlowy wybór.")
+                                }
                                 "0" -> break
                                 else -> println("Nieznana opcja.")
                             }
                         }
                     }
                 } else {
-                    println("Nie znaleziono użytkownika.")
+                    println("Nie znaleziono uzytkownika.")
                 }
             }
             "0" -> {
-                println("Zakończono program.")
+                println("Zakonczono program.")
                 break
             }
-            else -> println("Nieprawidłowy wybór.")
+            else -> println("Nieprawidlowy wybor.")
         }
     }
 }
