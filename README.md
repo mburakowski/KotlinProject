@@ -1,2 +1,19 @@
-# KotlinProject
-Projekt prostej aplikacji w języku Kotlin symulujący działanie protego serwisu marketplace w postaci kawiarni. W aplikacji użytkownicy mogą sprzedawać i kupować produkty. Aby otworyć dokumentację kodu należy pobrać plik html.zip, a następnie go wypakować i otworzyć plik index.html. 
+# Coffee shop in Kotlin
+Users can register and log in as:
+
+🛍 Buyers – customers who order coffee
+
+🛒 Sellers – staff who manage coffee products (requires special access code)
+
+✅ Features:
+🔐 Secure password handling with SHA-256 hashing
+
+💾 Persistent user data stored in users.txt
+
+📆 Auto-generated registration dates
+
+👤 Role-based actions and authentication
+
+🖥 Beginner-friendly CLI interface
+
+Buyers have a purchase count (future-ready for ordering simulation), and the system is designed to be extended with features like coffee ordering, product lists, and more.
